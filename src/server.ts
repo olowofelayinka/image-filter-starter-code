@@ -29,49 +29,25 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
 
   /**************************************************************************** */
 
-  //! END @TODO1
-  
-  // Root Endpoint
-  // Displays a simple message to the user
- app.get("/filteredimage/", async (req: Request, res: Response) => {
-  let image_url: string = req.query;
+  app.get( "/filteredimage", async ( req : Request, res : Response ) => {
 
-   // 1. validate the image_url query
-  if (!image_url) 
-  {
-    return res.status(400).send({ message: "Image URL required or malformed" });
-  }
+    let { image_url } = req.query;
 
-  let filteredImagePath: string;
-
-   // 2. call filterImageFromURL(image_url) to filter the image
-  try 
-  {
-    filteredImagePath = await filterImageFromURL(image_url);
-  } 
-  catch (err) 
-  {
-    console.error("applyFilter >> ", err);
-    return res.status(204).send({ message: "Error while filtering image" });
-  }
-
-   //    3. send the resulting file in the response
-  res.download(filteredImagePath, async err => {
-    if (err) 
-    {
-      res.status(204).end();
+    // 1. validate the image_url query
+    if (!image_url) {
+      return res.status(204).send({ message: 'Image url is required' });
     }
 
-    //4. deletes any files on the server on finish of the response
-    try 
-    {
-      await deleteLocalFiles([filteredImagePath]);
-    } 
-    catch (err) {
-      console.error("deleteTempFiles >> ", err);
-    }
+    // 2. call filterImageFromURL(image_url) to filter the image
+    let filtered_image_url = await filterImageFromURL(image_url);
+
+    //    3. send the resulting file in the response
+    res.sendFile(filtered_image_url , () =>
+        //4. deletes any files on the server on finish of the response
+        deleteLocalFiles([filtered_image_url])
+    );
+
   });
-});
 
  // Root Endpoint
  // Displays a simple message to the user
