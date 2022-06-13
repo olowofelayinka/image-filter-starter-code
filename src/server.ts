@@ -30,48 +30,43 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
   /**************************************************************************** */
 
   //! END @TODO1
-  
-  // Root Endpoint
-  // Displays a simple message to the user
- app.get("/filteredimage/", async (req: Request, res: Response) => {
-  let image_url: string = req.query;
 
-   // 1. validate the image_url query
-  if (!image_url) 
-  {
-    return res.status(400).send({ message: "Image URL required or malformed" });
-  }
+  app.get( "/filteredimage", async ( req: Request, res: Response ) => {
 
-  let filteredImagePath: string;
+    const { image_url }: { image_url: string } = req.query;
 
-   // 2. call filterImageFromURL(image_url) to filter the image
-  try 
-  {
-    filteredImagePath = await filterImageFromURL(image_url);
-  } 
-  catch (err) 
-  {
-    console.error("applyFilter >> ", err);
-    return res.status(204).send({ message: "Error while filtering image" });
-  }
-
-   //    3. send the resulting file in the response
-  res.sendFile(filteredImagePath, async err => {
-    if (err) 
-    {
-      res.status(204).end();
-    }
-
-    //4. deletes any files on the server on finish of the response
-    try 
-    {
-      await deleteLocalFiles([filteredImagePath]);
+    // Validate the image_url query parameter
+    if (!image_url) {
+      return res.status(400).send("image_url` is required");
     } 
-    catch (err) {
-      console.error("deleteTempFiles >> ", err);
-    }
+
+    // Filter the image
+    filterImageFromURL(image_url)
+
+      .then(filteredImagePath => {
+
+        // Send the resulting file in the response
+        res.status(200).sendFile(filteredImagePath, err => {
+
+          // Delete the file on the server after sending the file
+          if (err) {
+            return res.status(400).send( { message: err })
+          }
+          else {
+            deleteLocalFiles([filteredImagePath]);
+          }
+
+        });
+
+      })
+      .catch(error => {
+
+        // Return error message for caught errors
+        return res.status(422).send( { message: error } );
+        
+      }); 
+    
   });
-});
 
  // Root Endpoint
  // Displays a simple message to the user
